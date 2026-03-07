@@ -88,16 +88,33 @@ function startGame() {
 }
 
 function finishGame() {
+  // Clear the game state completely
   gameStarted = false;
   stopTimer();
+  
+  // Clear the puzzle grid
   document.getElementById('puzzle').innerHTML = '';
+  
+  // Reset stats
   moves = 0;
   seconds = 0;
   document.getElementById('moves').innerText = '0';
   document.getElementById('timer').innerText = '0';
+  
+  // Clear the image URL and file input
   imageURL = null;
   document.getElementById('upload').value = '';
+  
+  // Clear any share links
   document.getElementById('share').innerHTML = '';
+  
+  // Remove any background image styling
+  const puzzle = document.getElementById('puzzle');
+  puzzle.style.removeProperty('--bg-image');
+  puzzle.classList.remove('has-correct-tiles', 'correct-progress-25', 'correct-progress-50', 'correct-progress-75', 'correct-progress-100');
+  
+  // Show confirmation message
+  alert('Game finished! You can now choose a new image.');
 }
 
 function createPuzzle() {
@@ -113,6 +130,9 @@ function createPuzzle() {
   puzzle.innerHTML = "";
   puzzle.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
   
+  // Set CSS variable for the background image
+  puzzle.style.setProperty('--bg-image', `url(${imageURL})`);
+  
   // Create array of piece indices
   let pieces = [];
   for (let i = 0; i < gridSize * gridSize; i++) {
@@ -121,13 +141,16 @@ function createPuzzle() {
   
   shuffleArray(pieces);
   
-  // Create tiles (without setting background position yet)
+  // Create tiles
   pieces.forEach((pieceIndex, positionIndex) => {
     createTileElement(pieceIndex, positionIndex);
   });
   
   // After all tiles are in the DOM, set their background based on current container size
-  updateAllTileBackgrounds();
+  setTimeout(() => {
+    updateAllTileBackgrounds();
+    checkCorrectTiles();
+  }, 100);
 }
 
 function createTileElement(pieceIndex, positionIndex) {
@@ -154,8 +177,8 @@ function createTileElement(pieceIndex, positionIndex) {
 // Update all tiles' background positions and size based on current puzzle container width
 function updateAllTileBackgrounds() {
   const puzzle = document.getElementById("puzzle");
-  const containerWidth = puzzle.offsetWidth; // actual pixel width (e.g., 400, 300, 260)
-  if (containerWidth === 0) return; // not visible yet
+  const containerWidth = puzzle.offsetWidth;
+  if (containerWidth === 0) return;
   
   const tiles = document.querySelectorAll(".tile");
   tiles.forEach(tile => {
@@ -170,9 +193,56 @@ function updateAllTileBackgrounds() {
   });
 }
 
+// Check which tiles are in correct position and mark them
+function checkCorrectTiles() {
+  const tiles = document.querySelectorAll(".tile");
+  let correctCount = 0;
+  
+  tiles.forEach((tile, index) => {
+    const expectedPieceIndex = index;
+    const actualPieceIndex = parseInt(tile.dataset.pieceIndex);
+    
+    if (actualPieceIndex === expectedPieceIndex) {
+      tile.classList.add('correct');
+      correctCount++;
+    } else {
+      tile.classList.remove('correct');
+    }
+  });
+  
+  // Update puzzle class to show background image progress
+  const puzzle = document.getElementById("puzzle");
+  const totalTiles = tiles.length;
+  const correctPercentage = (correctCount / totalTiles) * 100;
+  
+  puzzle.classList.remove('correct-progress-25', 'correct-progress-50', 'correct-progress-75', 'correct-progress-100');
+  
+  if (correctPercentage >= 100) {
+    puzzle.classList.add('correct-progress-100');
+  } else if (correctPercentage >= 75) {
+    puzzle.classList.add('correct-progress-75');
+  } else if (correctPercentage >= 50) {
+    puzzle.classList.add('correct-progress-50');
+  } else if (correctPercentage >= 25) {
+    puzzle.classList.add('correct-progress-25');
+  }
+  
+  if (correctCount > 0) {
+    puzzle.classList.add('has-correct-tiles');
+  } else {
+    puzzle.classList.remove('has-correct-tiles');
+  }
+  
+  return correctCount === totalTiles;
+}
+
 // Drag and Drop handlers
 function dragStart(e) {
   if (!gameStarted) {
+    e.preventDefault();
+    return;
+  }
+  if (this.classList.contains('correct')) {
     e.preventDefault();
     return;
   }
@@ -195,6 +265,7 @@ function dragOver(e) {
 function dropTile(e) {
   e.preventDefault();
   if (!gameStarted || !draggedTile || draggedTile === this) return;
+  if (this.classList.contains('correct')) return;
   swapTiles(draggedTile, this);
 }
 
@@ -205,6 +276,8 @@ let touchStartPos = null;
 function touchStart(e) {
   e.preventDefault();
   if (!gameStarted) return;
+  if (this.classList.contains('correct')) return;
+  
   touchDraggedTile = this;
   touchStartPos = {
     x: e.touches[0].clientX,
@@ -229,7 +302,7 @@ function touchEnd(e) {
   const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
   const targetTile = elementUnderTouch?.closest(".tile");
   
-  if (targetTile && targetTile !== touchDraggedTile) {
+  if (targetTile && targetTile !== touchDraggedTile && !targetTile.classList.contains('correct')) {
     swapTiles(touchDraggedTile, targetTile);
   }
   touchDraggedTile = null;
@@ -238,21 +311,30 @@ function touchEnd(e) {
 
 // Swap tiles function
 function swapTiles(tile1, tile2) {
-  // Swap dataset pieceIndex
   const tempIndex = tile1.dataset.pieceIndex;
   tile1.dataset.pieceIndex = tile2.dataset.pieceIndex;
   tile2.dataset.pieceIndex = tempIndex;
   
-  // Update their backgrounds based on new pieceIndex
   updateTileBackground(tile1);
   updateTileBackground(tile2);
   
   moves++;
   document.getElementById("moves").innerText = moves;
-  checkWin();
+  
+  const allCorrect = checkCorrectTiles();
+  
+  if (allCorrect) {
+    stopTimer();
+    gameStarted = false;
+    
+    const difficultyNames = ['Easy', 'Medium', 'Hard'];
+    const difficultyIndex = gridSize === 3 ? 0 : gridSize === 4 ? 1 : 2;
+    
+    alert(`🎉 Congratulations ${currentPlayer.name}!\nTime: ${seconds}s | Moves: ${moves}\nDifficulty: ${difficultyNames[difficultyIndex]}`);
+    saveScore(seconds);
+  }
 }
 
-// Update a single tile's background based on its dataset.pieceIndex and current container width
 function updateTileBackground(tile) {
   const puzzle = document.getElementById("puzzle");
   const containerWidth = puzzle.offsetWidth;
@@ -268,7 +350,6 @@ function updateTileBackground(tile) {
   tile.style.backgroundSize = `${containerWidth}px ${containerWidth}px`;
 }
 
-// Shuffle array
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -293,31 +374,7 @@ function isSolvable(pieces, size) {
   return inversions % 2 === 0;
 }
 
-// Check win condition using current container size
-function checkWin() {
-  const tiles = document.querySelectorAll(".tile");
-  const puzzle = document.getElementById("puzzle");
-  const containerWidth = puzzle.offsetWidth;
-  if (containerWidth === 0) return;
-  
-  let correct = true;
-  tiles.forEach((tile, index) => {
-    const expectedPieceIndex = index; // correct piece for this position
-    const actualPieceIndex = parseInt(tile.dataset.pieceIndex);
-    if (actualPieceIndex !== expectedPieceIndex) {
-      correct = false;
-    }
-  });
-  
-  if (correct) {
-    stopTimer();
-    gameStarted = false;
-    alert(`🎉 Congratulations ${currentPlayer.name}!\nTime: ${seconds}s | Moves: ${moves}`);
-    saveScore(seconds);
-  }
-}
-
-// Save score to Firebase
+// Save score to Firebase with difficulty
 function saveScore(time) {
   if (!currentPlayer.name || currentPlayer.name === 'User') {
     openNameModal();
@@ -332,94 +389,214 @@ function saveScore(time) {
 }
 
 function saveScoreToDB(time) {
+  const difficultyNames = ['Easy', 'Medium', 'Hard'];
+  const difficultyIndex = gridSize === 3 ? 0 : gridSize === 4 ? 1 : 2;
+  const difficulty = difficultyNames[difficultyIndex];
+  
   db.ref("scores").push({
     name: currentPlayer.name,
     time: time,
     moves: moves,
+    difficulty: difficulty,
+    gridSize: gridSize,
     timestamp: Date.now()
   }).catch(error => {
     console.error("Error saving score:", error);
   });
 }
 
-// Create challenge link
+// Create challenge link - FIXED to prevent freezing
 function createChallenge() {
   if (!imageURL || !gridSize) {
     alert("Start a puzzle first!");
     return;
   }
-  const puzzleData = {
-    img: imageURL,
-    size: gridSize
-  };
-  const encodedData = btoa(JSON.stringify(puzzleData));
-  const link = `${window.location.origin}${window.location.pathname}?puzzle=${encodedData}`;
-  document.getElementById("share").innerHTML = `
-    <strong>Share this puzzle with a friend:</strong>
-    <input type="text" value="${link}" readonly onclick="this.select()">
-    <button class="btn" onclick="copyToClipboard('${link}')" style="margin-top:8px; width:100%;">Copy Link</button>
-  `;
+  
+  try {
+    // Compress the image data by using a smaller version
+    // For large images, we'll store just the essential info
+    const puzzleData = {
+      img: imageURL.length > 100000 ? 'large_image' : imageURL, // Flag for large images
+      size: gridSize,
+      timestamp: Date.now()
+    };
+    
+    // If image is too large, store a message instead
+    if (imageURL.length > 100000) {
+      alert("Image is too large to share via link. The recipient will need to choose their own image.");
+      puzzleData.img = null;
+    }
+    
+    const encodedData = btoa(JSON.stringify(puzzleData));
+    
+    // Use history API to update URL without reload
+    const newUrl = `${window.location.origin}${window.location.pathname}?puzzle=${encodedData}`;
+    
+    // Show the link in a safe way without freezing
+    document.getElementById("share").innerHTML = `
+      <strong>🎮 Challenge a Friend!</strong>
+      <p style="margin:10px 0; color:white;">Copy this link and send it to your friend:</p>
+      <div style="background: #2c3e50; padding: 10px; border-radius: 10px; word-break: break-all; font-size: 14px; color: #5ce7ff;">
+        ${newUrl.substring(0, 100)}...
+      </div>
+      <button class="btn" onclick="copySafeLink('${newUrl}')" style="margin-top:10px; width:100%;">📋 Copy Full Link</button>
+      <p style="margin-top:10px; font-size:14px; color:#aaa;">Note: Very large images cannot be shared via link.</p>
+    `;
+  } catch (e) {
+    console.error('Error creating challenge:', e);
+    alert('Failed to create challenge link. The image might be too large.');
+  }
 }
 
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Link copied!");
-  });
+// Safe copy function
+function copySafeLink(text) {
+  // Create a temporary textarea element
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('✅ Link copied to clipboard!');
 }
 
-// Load shared puzzle from URL
+// Load shared puzzle from URL - FIXED to handle large images
 window.onload = function() {
   loadPlayer();
   document.querySelector('.user-badge').addEventListener('click', openNameModal);
   
   const params = new URLSearchParams(location.search);
   const puzzleData = params.get("puzzle");
+  
   if (puzzleData) {
     try {
-      const data = JSON.parse(atob(puzzleData));
-      imageURL = data.img;
-      gridSize = data.size;
-      document.getElementById("difficulty").value = gridSize;
-      createPuzzle();
+      // Show loading indicator
+      document.getElementById('puzzle').innerHTML = '<div style="color:white; padding:20px;">Loading shared puzzle...</div>';
+      
+      // Use setTimeout to prevent freezing
+      setTimeout(() => {
+        try {
+          const data = JSON.parse(atob(puzzleData));
+          
+          if (data.img && data.img !== 'large_image' && data.img !== null) {
+            imageURL = data.img;
+            gridSize = data.size;
+            document.getElementById("difficulty").value = gridSize;
+            createPuzzle();
+          } else {
+            alert('Shared puzzle image could not be loaded. Please choose your own image.');
+            document.getElementById('puzzle').innerHTML = '';
+          }
+        } catch (e) {
+          console.error('Error parsing puzzle data:', e);
+          alert('Invalid puzzle link. Please start a new game.');
+          document.getElementById('puzzle').innerHTML = '';
+        }
+      }, 100);
+      
     } catch (e) {
       console.error("Error loading shared puzzle:", e);
+      document.getElementById('puzzle').innerHTML = '';
     }
   }
   
-  loadLeaderboard();
+  // Load leaderboards for all difficulties
+  loadLeaderboard('Easy');
+  loadLeaderboard('Medium');
+  loadLeaderboard('Hard');
   
-  // Optional: update backgrounds if window resizes (e.g., orientation change)
+  // Add difficulty tab switching
+  setupLeaderboardTabs();
+  
   window.addEventListener('resize', () => {
     if (gameStarted && imageURL) {
       updateAllTileBackgrounds();
+      checkCorrectTiles();
     }
   });
 };
 
-// Load leaderboard from Firebase
-function loadLeaderboard() {
+// Setup leaderboard tabs
+function setupLeaderboardTabs() {
+  const leaderboardSection = document.querySelector('.leaderboard-section');
+  
+  // Create tab buttons if they don't exist
+  if (!document.getElementById('leaderboard-tabs')) {
+    const tabsHtml = `
+      <div id="leaderboard-tabs" style="display:flex; gap:10px; margin-bottom:20px; justify-content:center;">
+        <button class="tab-btn active" data-difficulty="Easy" onclick="switchLeaderboard('Easy')">Easy (3x3)</button>
+        <button class="tab-btn" data-difficulty="Medium" onclick="switchLeaderboard('Medium')">Medium (4x4)</button>
+        <button class="tab-btn" data-difficulty="Hard" onclick="switchLeaderboard('Hard')">Hard (5x5)</button>
+      </div>
+    `;
+    
+    // Insert tabs before the leaderboard list
+    const leaderboardList = document.getElementById('leaderboard');
+    leaderboardSection.insertAdjacentHTML('afterbegin', tabsHtml);
+  }
+}
+
+// Switch between leaderboard difficulties
+function switchLeaderboard(difficulty) {
+  // Update tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    if (btn.dataset.difficulty === difficulty) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  
+  // Load selected leaderboard
+  loadLeaderboard(difficulty);
+}
+
+// Load leaderboard from Firebase by difficulty
+function loadLeaderboard(difficulty) {
   db.ref("scores").orderByChild("time").limitToFirst(10).on("value", snapshot => {
     const list = document.getElementById("leaderboard");
     list.innerHTML = "";
+    
     let rank = 1;
+    const scores = [];
+    
     snapshot.forEach(score => {
       const data = score.val();
+      scores.push(data);
+    });
+    
+    // Filter by difficulty if specified
+    const filteredScores = difficulty ? scores.filter(s => s.difficulty === difficulty) : scores;
+    
+    if (filteredScores.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = `No ${difficulty || ''} scores yet. Be the first!`;
+      li.style.justifyContent = 'center';
+      list.appendChild(li);
+      return;
+    }
+    
+    filteredScores.forEach(data => {
       const li = document.createElement("li");
       if (data.name === currentPlayer.name) {
         li.classList.add('current-player');
       }
+      
+      // Add difficulty badge
+      const difficultyColor = 
+        data.difficulty === 'Easy' ? '#5ce7ff' : 
+        data.difficulty === 'Medium' ? '#ff9f4a' : '#ff6b6b';
+      
       li.innerHTML = `
-        <span>${rank}. ${data.name}</span>
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="background:${difficultyColor}; color:black; padding:2px 8px; border-radius:20px; font-size:12px;">${data.difficulty || '?'}</span>
+          <span>${rank}. ${data.name}</span>
+        </span>
         <span>${data.time}s (${data.moves || '?'} moves)</span>
       `;
       list.appendChild(li);
       rank++;
     });
-    if (rank === 1) {
-      const li = document.createElement("li");
-      li.textContent = "No scores yet. Be the first!";
-      list.appendChild(li);
-    }
   });
 }
 

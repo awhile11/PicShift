@@ -1,8 +1,11 @@
+/* Import a fun, playful font */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Patrick+Hand&family=Chewy&display=swap');
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Poppins', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+  font-family: 'Patrick Hand', 'Chewy', 'Fredoka One', cursive, sans-serif;
 }
 
 body {
@@ -37,12 +40,13 @@ body {
 }
 
 .header h1 {
-  font-size: 42px;
-  font-weight: 700;
+  font-size: 48px;
+  font-weight: 400;
   letter-spacing: 2px;
   color: #5ce7ff;
-  font-family: 'Poppins', 'Comic Sans MS', cursive;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  font-family: 'Fredoka One', cursive;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  transform: rotate(-1deg);
 }
 
 .user-badge {
@@ -67,15 +71,15 @@ body {
 }
 
 .user-icon {
-  font-size: 22px;
+  font-size: 24px;
   transition: color 0.2s;
 }
 
 .user-name {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #5ce7ff;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Patrick Hand', cursive;
   transition: color 0.2s;
 }
 
@@ -101,13 +105,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .stat-label {
   color: white;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Chewy', cursive;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -117,8 +121,8 @@ body {
   color: #5ce7ff;
   min-width: 50px;
   text-align: right;
-  font-family: 'Poppins', sans-serif;
-  font-size: 28px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 32px;
   background: rgba(92, 231, 255, 0.1);
   padding: 0 8px;
   border-radius: 10px;
@@ -136,7 +140,7 @@ body {
   padding: 12px 20px;
   border: none;
   border-radius: 50px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -144,7 +148,7 @@ body {
   color: #5ce7ff;
   flex: 1 1 auto;
   min-width: 130px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Chewy', cursive;
   text-transform: uppercase;
   letter-spacing: 1px;
   border: 2px solid #5ce7ff;
@@ -188,14 +192,14 @@ select.btn {
   padding-right: 45px;
   background-color: black;
   color: #5ce7ff;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Chewy', cursive;
   font-weight: 600;
 }
 
 select.btn option {
   background: black;
   color: #5ce7ff;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Chewy', cursive;
   padding: 10px;
 }
 
@@ -208,7 +212,7 @@ select.btn option {
 
 .action-bar .btn {
   flex: 1;
-  font-size: 20px;
+  font-size: 22px;
   padding: 15px;
   font-weight: 700;
   text-transform: uppercase;
@@ -220,17 +224,24 @@ select.btn option {
   padding: 20px;
   background: #414549;
   border-radius: 16px;
-  font-size: 16px;
+  font-size: 18px;
   word-break: break-word;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Patrick Hand', cursive;
   border: 2px dashed #5ce7ff;
 }
 
 .share-box strong {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
+  font-family: 'Fredoka One', cursive;
+  font-weight: 400;
   color: #5ce7ff;
-  font-size: 18px;
+  font-size: 20px;
+}
+
+.share-box p {
+  margin: 10px 0;
+  color: white;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
 }
 
 .share-box input {
@@ -239,8 +250,8 @@ select.btn option {
   margin-top: 10px;
   border: 2px solid #5ce7ff;
   border-radius: 50px;
-  font-size: 14px;
-  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-family: 'Patrick Hand', cursive;
   background: white;
   font-weight: 500;
 }
@@ -271,33 +282,69 @@ select.btn option {
   height: 400px;
   display: grid;
   gap: 3px;
-  background: #5ce7ff;
+  background: #2c3e50;
   border: 4px solid #5ce7ff;
   border-radius: 16px;
   overflow: hidden;
   max-width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
+  position: relative;
 }
 
-.tile {
+/* Full image background that shows through as tiles disappear */
+#puzzle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--bg-image);
   background-size: cover;
+  background-position: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Increase opacity as more tiles are correct */
+#puzzle.correct-progress-25::before { opacity: 0.25; }
+#puzzle.correct-progress-50::before { opacity: 0.5; }
+#puzzle.correct-progress-75::before { opacity: 0.75; }
+#puzzle.correct-progress-100::before { opacity: 1; }
+
+.tile {
+  background-size: 400px 400px;
   cursor: grab;
-  transition: opacity 0.2s;
+  transition: all 0.3s ease;
   border: 2px solid white;
   border-radius: 4px;
   background-repeat: no-repeat;
-  background-position: center;
+  position: relative;
+  z-index: 2;
+  background-color: #2c3e50;
+}
+
+/* Correct tiles disappear - they become transparent */
+.tile.correct {
+  opacity: 0;
+  pointer-events: none;
+  border-color: transparent;
+  transition: opacity 0.3s ease;
 }
 
 .tile:active {
   cursor: grabbing;
-  opacity: 0.9;
+  transform: scale(0.98);
 }
 
 .tile.dragging {
-  opacity: 0.7;
+  opacity: 0.8;
   border: 3px solid #5ce7ff;
+  z-index: 10;
+  transform: scale(1.02);
 }
 
 /* Leaderboard Section */
@@ -310,17 +357,52 @@ select.btn option {
 .leaderboard-section h2 {
   color: #5ce7ff;
   margin-bottom: 20px;
-  font-size: 32px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 800;
+  font-size: 36px;
+  font-family: 'Fredoka One', cursive;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 2px;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
   display: inline-block;
   background: black;
   padding: 8px 25px;
   border-radius: 50px;
   border: 3px solid #5ce7ff;
+}
+
+/* Leaderboard Tabs */
+#leaderboard-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: black;
+  color: #5ce7ff;
+  font-family: 'Chewy', cursive;
+  border: 2px solid #5ce7ff;
+  min-width: 100px;
+}
+
+.tab-btn:hover {
+  background: #5ce7ff;
+  color: black;
+}
+
+.tab-btn.active {
+  background: #5ce7ff;
+  color: black;
+  border-color: white;
 }
 
 #leaderboard {
@@ -337,8 +419,8 @@ select.btn option {
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #5ce7ff;
-  font-size: 20px;
-  font-family: 'Poppins', sans-serif;
+  font-size: 22px;
+  font-family: 'Patrick Hand', cursive;
   font-weight: 600;
   word-break: break-word;
   gap: 15px;
@@ -353,25 +435,60 @@ select.btn option {
   background: linear-gradient(145deg, #5ce7ff, #00a5ff);
   color: black;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 24px;
+  font-family: 'Fredoka One', cursive;
 }
 
 #leaderboard li:nth-child(2) {
   background: linear-gradient(145deg, #bdc3c7, #95a5a6);
   color: white;
   font-weight: 700;
+  font-family: 'Fredoka One', cursive;
 }
 
 #leaderboard li:nth-child(3) {
   background: linear-gradient(145deg, #ff9f4a, #ff6b4a);
   color: white;
   font-weight: 700;
+  font-family: 'Fredoka One', cursive;
 }
 
 #leaderboard li.current-player {
   border: 4px solid #5ce7ff;
   box-shadow: 0 0 0 4px rgba(92, 231, 255, 0.5);
   font-weight: 800;
+}
+
+/* Difficulty badges in leaderboard */
+#leaderboard li span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.difficulty-badge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 50px;
+  text-align: center;
+}
+
+.difficulty-easy {
+  background: #5ce7ff;
+  color: black;
+}
+
+.difficulty-medium {
+  background: #ff9f4a;
+  color: black;
+}
+
+.difficulty-hard {
+  background: #ff6b6b;
+  color: white;
 }
 
 /* Modal */
@@ -401,9 +518,9 @@ select.btn option {
 .modal-content h3 {
   margin-bottom: 20px;
   color: #5ce7ff;
-  font-size: 28px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
+  font-size: 32px;
+  font-family: 'Fredoka One', cursive;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -413,9 +530,9 @@ select.btn option {
   padding: 15px;
   border: 3px solid #5ce7ff;
   border-radius: 50px;
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 25px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Patrick Hand', cursive;
   font-weight: 500;
   background: #f0f0f0;
 }
@@ -434,7 +551,7 @@ select.btn option {
   flex: 1;
   background: black;
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   padding: 12px;
   border-radius: 50px;
   border: 2px solid #5ce7ff;
@@ -461,11 +578,11 @@ select.btn option {
   }
 
   .header h1 {
-    font-size: 32px;
+    font-size: 36px;
   }
 
   .user-name {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .main-panel {
@@ -478,22 +595,22 @@ select.btn option {
   }
 
   .stat-item {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .stat-value {
-    font-size: 24px;
+    font-size: 26px;
     min-width: 40px;
   }
 
   .btn {
-    font-size: 14px;
+    font-size: 16px;
     padding: 10px 12px;
     min-width: 100px;
   }
 
   .action-bar .btn {
-    font-size: 16px;
+    font-size: 18px;
     padding: 12px;
   }
 
@@ -508,13 +625,42 @@ select.btn option {
   }
 
   .leaderboard-section h2 {
-    font-size: 26px;
+    font-size: 28px;
     padding: 6px 20px;
   }
 
+  #leaderboard-tabs {
+    gap: 5px;
+  }
+
+  .tab-btn {
+    font-size: 14px;
+    padding: 8px 12px;
+    min-width: 80px;
+  }
+
   #leaderboard li {
-    font-size: 16px;
+    font-size: 18px;
     padding: 12px 15px;
+  }
+
+  #leaderboard li span:first-child {
+    gap: 4px;
+  }
+
+  .difficulty-badge {
+    font-size: 10px;
+    padding: 2px 4px;
+    min-width: 40px;
+  }
+
+  .share-box {
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  .share-box p {
+    font-size: 14px;
   }
 
   .modal-content {
@@ -522,41 +668,57 @@ select.btn option {
   }
 
   .modal-content h3 {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .modal-content input {
-    font-size: 16px;
+    font-size: 18px;
     padding: 12px;
   }
 
   .modal-buttons .btn {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 
 /* Extra small screens */
 @media (max-width: 380px) {
   .header h1 {
-    font-size: 26px;
+    font-size: 30px;
   }
 
   .stat-item {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .stat-value {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .btn {
     min-width: 80px;
-    font-size: 13px;
+    font-size: 15px;
     padding: 8px 10px;
   }
 
   #puzzle {
     max-width: 280px;
+  }
+
+  .tab-btn {
+    font-size: 12px;
+    padding: 6px 8px;
+    min-width: 70px;
+  }
+
+  #leaderboard li {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .difficulty-badge {
+    font-size: 9px;
+    min-width: 35px;
   }
 }
 
@@ -577,4 +739,25 @@ select.btn option {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #00a5ff;
+}
+
+/* Loading indicator */
+.loading {
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 18px;
+}
+
+/* Link preview in share box */
+.link-preview {
+  background: #2c3e50;
+  padding: 10px;
+  border-radius: 10px;
+  word-break: break-all;
+  font-size: 14px;
+  color: #5ce7ff;
+  font-family: 'Patrick Hand', cursive;
+  margin: 10px 0;
 }
