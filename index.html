@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PicShift · Puzzle Arena</title>
+  <title>PieShift · Puzzle Arena</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -11,7 +11,7 @@
 <body>
   <div class="app">
     <div class="header">
-      <h1>PicShift</h1>
+      <h1>PieShift</h1>
       <div class="user-badge">
         <span class="user-icon">👤</span>
         <span class="user-name" id="displayName">User</span>
@@ -33,9 +33,9 @@
       <div class="control-bar">
         <button class="btn" onclick="document.getElementById('upload').click()">Choose file</button>
         <select id="difficulty" class="btn">
-          <option value="3">Easy</option>
-          <option value="4">Medium</option>
-          <option value="5">Hard</option>
+          <option value="3">Easy (3x3)</option>
+          <option value="4">Medium (4x4)</option>
+          <option value="5">Hard (5x5)</option>
         </select>
         <button class="btn" onclick="createChallenge()">Challenge Friend</button>
       </div>

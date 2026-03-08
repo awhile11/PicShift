@@ -113,7 +113,6 @@ function finishGame() {
   puzzle.style.removeProperty('--bg-image');
   puzzle.classList.remove('has-correct-tiles', 'correct-progress-25', 'correct-progress-50', 'correct-progress-75', 'correct-progress-100');
   
-  // Show confirmation message
   alert('Game finished! You can now choose a new image.');
 }
 
@@ -225,12 +224,6 @@ function checkCorrectTiles() {
     puzzle.classList.add('correct-progress-50');
   } else if (correctPercentage >= 25) {
     puzzle.classList.add('correct-progress-25');
-  }
-  
-  if (correctCount > 0) {
-    puzzle.classList.add('has-correct-tiles');
-  } else {
-    puzzle.classList.remove('has-correct-tiles');
   }
   
   return correctCount === totalTiles;
@@ -378,11 +371,13 @@ function isSolvable(pieces, size) {
 function saveScore(time) {
   if (!currentPlayer.name || currentPlayer.name === 'User') {
     openNameModal();
-    setTimeout(() => {
+    // Save score after name is entered
+    const checkNameAndSave = setInterval(() => {
       if (currentPlayer.name !== 'User') {
+        clearInterval(checkNameAndSave);
         saveScoreToDB(time);
       }
-    }, 500);
+    }, 100);
   } else {
     saveScoreToDB(time);
   }
@@ -400,8 +395,12 @@ function saveScoreToDB(time) {
     difficulty: difficulty,
     gridSize: gridSize,
     timestamp: Date.now()
+  }).then(() => {
+    console.log("Score saved successfully!");
+    // Leaderboard will update automatically via the Firebase listener
   }).catch(error => {
     console.error("Error saving score:", error);
+    alert("Failed to save score. Please check your Firebase configuration.");
   });
 }
 
@@ -436,7 +435,7 @@ function createChallenge() {
     document.getElementById("share").innerHTML = `
       <strong>🎮 Challenge a Friend!</strong>
       <p style="margin:10px 0; color:white;">Copy this link and send it to your friend:</p>
-      <div style="background: #2c3e50; padding: 10px; border-radius: 10px; word-break: break-all; font-size: 14px; color: #5ce7ff;">
+      <div class="link-preview">
         ${newUrl.substring(0, 100)}...
       </div>
       <button class="btn" onclick="copySafeLink('${newUrl}')" style="margin-top:10px; width:100%;">📋 Copy Full Link</button>
@@ -471,7 +470,7 @@ window.onload = function() {
   if (puzzleData) {
     try {
       // Show loading indicator
-      document.getElementById('puzzle').innerHTML = '<div style="color:white; padding:20px;">Loading shared puzzle...</div>';
+      document.getElementById('puzzle').innerHTML = '<div class="loading">Loading shared puzzle...</div>';
       
       // Use setTimeout to prevent freezing
       setTimeout(() => {
@@ -500,13 +499,8 @@ window.onload = function() {
     }
   }
   
-  // Load leaderboards for all difficulties
-  loadLeaderboard('Easy');
-  loadLeaderboard('Medium');
-  loadLeaderboard('Hard');
-  
-  // Add difficulty tab switching
-  setupLeaderboardTabs();
+  // Set up leaderboard listener
+  setupLeaderboardListener();
   
   window.addEventListener('resize', () => {
     if (gameStarted && imageURL) {
@@ -516,88 +510,85 @@ window.onload = function() {
   });
 };
 
-// Setup leaderboard tabs
-function setupLeaderboardTabs() {
-  const leaderboardSection = document.querySelector('.leaderboard-section');
+// Set up Firebase listener for leaderboard updates
+function setupLeaderboardListener() {
+  console.log("Setting up leaderboard listener...");
   
-  // Create tab buttons if they don't exist
-  if (!document.getElementById('leaderboard-tabs')) {
-    const tabsHtml = `
-      <div id="leaderboard-tabs" style="display:flex; gap:10px; margin-bottom:20px; justify-content:center;">
-        <button class="tab-btn active" data-difficulty="Easy" onclick="switchLeaderboard('Easy')">Easy (3x3)</button>
-        <button class="tab-btn" data-difficulty="Medium" onclick="switchLeaderboard('Medium')">Medium (4x4)</button>
-        <button class="tab-btn" data-difficulty="Hard" onclick="switchLeaderboard('Hard')">Hard (5x5)</button>
+  // Remove any existing listeners to prevent duplicates
+  if (window.leaderboardRef) {
+    window.leaderboardRef.off();
+  }
+  
+  // Create a new listener
+  window.leaderboardRef = db.ref("scores").orderByChild("time").limitToFirst(20);
+  
+  window.leaderboardRef.on("value", snapshot => {
+    console.log("Leaderboard data received:", snapshot.val());
+    updateLeaderboardDisplay(snapshot);
+  }, error => {
+    console.error("Firebase listener error:", error);
+  });
+}
+
+// Update leaderboard display with data from Firebase
+function updateLeaderboardDisplay(snapshot) {
+  const list = document.getElementById("leaderboard");
+  if (!list) return;
+  
+  list.innerHTML = "";
+  
+  let rank = 1;
+  const scores = [];
+  
+  snapshot.forEach(score => {
+    const data = score.val();
+    scores.push(data);
+  });
+  
+  // Sort by time (already sorted by Firebase, but just in case)
+  scores.sort((a, b) => a.time - b.time);
+  
+  if (scores.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No scores yet. Be the first!";
+    li.style.justifyContent = 'center';
+    list.appendChild(li);
+    return;
+  }
+  
+  scores.forEach(data => {
+    const li = document.createElement("li");
+    if (data.name === currentPlayer.name) {
+      li.classList.add('current-player');
+    }
+    
+    // Determine difficulty class
+    let difficultyClass = 'difficulty-easy';
+    if (data.difficulty === 'Medium') difficultyClass = 'difficulty-medium';
+    if (data.difficulty === 'Hard') difficultyClass = 'difficulty-hard';
+    
+    li.innerHTML = `
+      <div class="player-info">
+        <span class="difficulty-badge ${difficultyClass}">${data.difficulty || 'Easy'}</span>
+        <span class="player-name">${rank}. ${data.name}</span>
+      </div>
+      <div class="score-info">
+        <span class="score-time">${data.time}s</span>
+        <span class="score-moves">${data.moves || '?'} moves</span>
       </div>
     `;
-    
-    // Insert tabs before the leaderboard list
-    const leaderboardList = document.getElementById('leaderboard');
-    leaderboardSection.insertAdjacentHTML('afterbegin', tabsHtml);
+    list.appendChild(li);
+    rank++;
+  });
+}
+
+// Force refresh leaderboard manually
+function refreshLeaderboard() {
+  if (window.leaderboardRef) {
+    window.leaderboardRef.once("value", snapshot => {
+      updateLeaderboardDisplay(snapshot);
+    });
   }
-}
-
-// Switch between leaderboard difficulties
-function switchLeaderboard(difficulty) {
-  // Update tab buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    if (btn.dataset.difficulty === difficulty) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
-  
-  // Load selected leaderboard
-  loadLeaderboard(difficulty);
-}
-
-// Load leaderboard from Firebase by difficulty
-function loadLeaderboard(difficulty) {
-  db.ref("scores").orderByChild("time").limitToFirst(10).on("value", snapshot => {
-    const list = document.getElementById("leaderboard");
-    list.innerHTML = "";
-    
-    let rank = 1;
-    const scores = [];
-    
-    snapshot.forEach(score => {
-      const data = score.val();
-      scores.push(data);
-    });
-    
-    // Filter by difficulty if specified
-    const filteredScores = difficulty ? scores.filter(s => s.difficulty === difficulty) : scores;
-    
-    if (filteredScores.length === 0) {
-      const li = document.createElement("li");
-      li.textContent = `No ${difficulty || ''} scores yet. Be the first!`;
-      li.style.justifyContent = 'center';
-      list.appendChild(li);
-      return;
-    }
-    
-    filteredScores.forEach(data => {
-      const li = document.createElement("li");
-      if (data.name === currentPlayer.name) {
-        li.classList.add('current-player');
-      }
-      
-      // Add difficulty badge
-      const difficultyColor = 
-        data.difficulty === 'Easy' ? '#5ce7ff' : 
-        data.difficulty === 'Medium' ? '#ff9f4a' : '#ff6b6b';
-      
-      li.innerHTML = `
-        <span style="display:flex; align-items:center; gap:8px;">
-          <span style="background:${difficultyColor}; color:black; padding:2px 8px; border-radius:20px; font-size:12px;">${data.difficulty || '?'}</span>
-          <span>${rank}. ${data.name}</span>
-        </span>
-        <span>${data.time}s (${data.moves || '?'} moves)</span>
-      `;
-      list.appendChild(li);
-      rank++;
-    });
-  });
 }
 
 // Keyboard shortcuts

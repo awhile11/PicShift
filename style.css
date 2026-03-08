@@ -309,11 +309,13 @@ select.btn option {
   transition: opacity 0.3s ease;
 }
 
-/* Increase opacity as more tiles are correct */
-#puzzle.correct-progress-25::before { opacity: 0.25; }
-#puzzle.correct-progress-50::before { opacity: 0.5; }
-#puzzle.correct-progress-75::before { opacity: 0.75; }
-#puzzle.correct-progress-100::before { opacity: 1; }
+/* Background becomes visible as tiles are placed correctly - always 100% when any tile is correct */
+#puzzle.correct-progress-25::before,
+#puzzle.correct-progress-50::before,
+#puzzle.correct-progress-75::before,
+#puzzle.correct-progress-100::before {
+  opacity: 1;
+}
 
 .tile {
   background-size: 400px 400px;
@@ -370,41 +372,7 @@ select.btn option {
   border: 3px solid #5ce7ff;
 }
 
-/* Leaderboard Tabs */
-#leaderboard-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.tab-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 50px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: black;
-  color: #5ce7ff;
-  font-family: 'Chewy', cursive;
-  border: 2px solid #5ce7ff;
-  min-width: 100px;
-}
-
-.tab-btn:hover {
-  background: #5ce7ff;
-  color: black;
-}
-
-.tab-btn.active {
-  background: #5ce7ff;
-  color: black;
-  border-color: white;
-}
-
+/* Single unified leaderboard */
 #leaderboard {
   list-style: none;
   background: #f8f9fa;
@@ -459,21 +427,32 @@ select.btn option {
   font-weight: 800;
 }
 
-/* Difficulty badges in leaderboard */
-#leaderboard li span:first-child {
+/* Player info container */
+.player-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
+.player-name {
+  font-weight: 600;
+}
+
+/* Difficulty badges next to player names */
 .difficulty-badge {
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 14px;
   font-weight: bold;
   display: inline-block;
-  min-width: 50px;
+  min-width: 60px;
   text-align: center;
+  font-family: 'Fredoka One', cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .difficulty-easy {
@@ -489,6 +468,27 @@ select.btn option {
 .difficulty-hard {
   background: #ff6b6b;
   color: white;
+}
+
+/* Score info */
+.score-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 18px;
+}
+
+.score-time {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.score-moves {
+  color: #5ce7ff;
+  font-weight: 700;
+  background: rgba(92, 231, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 20px;
 }
 
 /* Modal */
@@ -629,29 +629,29 @@ select.btn option {
     padding: 6px 20px;
   }
 
-  #leaderboard-tabs {
-    gap: 5px;
-  }
-
-  .tab-btn {
-    font-size: 14px;
-    padding: 8px 12px;
-    min-width: 80px;
-  }
-
   #leaderboard li {
     font-size: 18px;
     padding: 12px 15px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  #leaderboard li span:first-child {
-    gap: 4px;
+  .player-info {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .difficulty-badge {
-    font-size: 10px;
-    padding: 2px 4px;
-    min-width: 40px;
+    font-size: 12px;
+    padding: 2px 8px;
+    min-width: 50px;
+  }
+
+  .score-info {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 16px;
   }
 
   .share-box {
@@ -705,20 +705,14 @@ select.btn option {
     max-width: 280px;
   }
 
-  .tab-btn {
-    font-size: 12px;
-    padding: 6px 8px;
-    min-width: 70px;
-  }
-
   #leaderboard li {
     font-size: 16px;
     padding: 10px 12px;
   }
 
   .difficulty-badge {
-    font-size: 9px;
-    min-width: 35px;
+    font-size: 10px;
+    min-width: 45px;
   }
 }
 
